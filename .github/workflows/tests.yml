@@ -1,0 +1,84 @@
+# Runs the offline suites of docs/TESTING.md, each in the product image
+# built from this commit with networking disabled (--network none), as
+# TESTING.md runs them. The engine's Perl suite, the container checks and the
+# browser checks run on every push to main and on pull requests. The web
+# service's suite takes about 40 minutes, which a private repository pays
+# for in Actions minutes, so it runs only on a version tag or when started
+# by hand (Actions, Tests, Run workflow). The three labs against
+# third-party software (Ergo, FServe.pl, Prowlarr) are left to a release:
+# they pull other images and download FServe.pl.
+name: Tests
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*.*.*"]
+  pull_request:
+  workflow_dispatch:
+
+# A newer push to the same branch replaces a run still going.
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  engine:
+    name: Engine and container
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build the product image
+        run: docker build -f deploy/Dockerfile -t dccatlas:dev .
+      # The image's user is not the runner's, and tests write beside
+      # themselves.
+      - name: Let the image's user write to the checkout
+        run: chmod -R a+rwX "$GITHUB_WORKSPACE"
+      - name: Engine (Perl)
+        run: >
+          docker run --rm --network none
+          --mount "type=bind,source=$GITHUB_WORKSPACE,target=/project"
+          --workdir /project --entrypoint sh dccatlas:dev
+          -c 'prove -Ilib -It/lib -r t'
+      - name: Container checks
+        run: python3 tools/container_check.py --image dccatlas:dev
+
+  web:
+    name: Web service
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build the product image
+        run: docker build -f deploy/Dockerfile -t dccatlas:dev .
+      - name: Let the image's user write to the checkout
+        run: chmod -R a+rwX "$GITHUB_WORKSPACE"
+      - name: Web service suite
+        run: >
+          docker run --rm --network none
+          --mount "type=bind,source=$GITHUB_WORKSPACE,target=/project"
+          --workdir /project --entrypoint /opt/venv/bin/python dccatlas:dev
+          -B -m unittest discover -v -s t -p "web_*_test.py"
+
+  browser:
+    name: Page in a browser
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build the product and browser images
+        run: |
+          docker build -f deploy/Dockerfile -t dccatlas:dev .
+          docker build -t dccatlas:browser-test tools/browser
+      - name: Let the image's user write to the checkout
+        run: chmod -R a+rwX "$GITHUB_WORKSPACE"
+      - name: Browser checks
+        run: >
+          docker run --rm --network none
+          --mount "type=bind,source=$GITHUB_WORKSPACE,target=/project"
+          --workdir /project --entrypoint /opt/venv/bin/python dccatlas:browser-test
+          -B -m unittest t.web_browser_test -v

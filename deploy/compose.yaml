@@ -1,0 +1,80 @@
+# DCCAtlas, single container. From the repository root:
+#   docker compose -f deploy/compose.yaml up --build -d
+# Then open http://localhost:8080 and set a password, with the setup code
+# printed in the log:
+#   docker compose -f deploy/compose.yaml logs dccatlas
+# Optionally, for a setup made by script, put a password in a file first; it
+# is adopted at a start whenever the file is new or has changed:
+#   mkdir -p deploy/secrets && printf '%s\n' 'choose-a-long-password' > deploy/secrets/password.txt
+services:
+  dccatlas:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: dccatlas:dev
+    init: true
+    # Run as this user from the start, with no capabilities: nothing in the
+    # container runs as root. (Started as root, as on unRAID, the image hands
+    # its volumes to PUID:PGID and drops to that user itself.)
+    user: "1000:1000"
+    restart: unless-stopped
+    stop_grace_period: 30s
+    # Published on this computer only. To reach it from the LAN, change the
+    # address deliberately, put the name you browse to in FSERVE_ALLOWED_HOSTS
+    # (localhost and private-network addresses are always accepted), and
+    # put an HTTPS reverse proxy that keeps the Host header in front (then
+    # set FSERVE_COOKIE_SECURE to "1"); the password otherwise crosses the
+    # network unencrypted.
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      # "dccatlas" is this service's name on the compose network, which
+      # Prowlarr uses to reach it (see the prowlarr service below).
+      FSERVE_ALLOWED_HOSTS: "dccatlas"
+      FSERVE_COOKIE_SECURE: "0"
+      # The optional password file (see the top of this file). Its folder is
+      # mounted rather than the file, so that it may be missing.
+      FSERVE_PASSWORD_FILE: "/run/secrets/dccatlas/password.txt"
+    volumes:
+      - dccatlas-config:/config
+      - dccatlas-downloads:/downloads
+      - ./secrets:/run/secrets/dccatlas:ro
+    # The connection log is printed too; without these, Docker keeps the
+    # container's output without limit.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+  # Optional (2026-10-26): Prowlarr, which reaches DCCAtlas as
+  # http://dccatlas:8080 on this network. Started only when asked for:
+  #   docker compose -f deploy/compose.yaml --profile prowlarr up -d
+  # Then open http://localhost:9696 and follow the Prowlarr part of the
+  # guide. Prowlarr reaches the Internet for its other indexers.
+  prowlarr:
+    profiles: ["prowlarr"]
+    image: docker.io/linuxserver/prowlarr:2.6.5@sha256:b3b00047ed20f6ce2b16780145cb6a0acb51c9e28ea6aa6f5dcd33c7034f1797
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9696:9696"
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      TZ: "Etc/UTC"
+    volumes:
+      - prowlarr-config:/config
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  dccatlas-config:
+  dccatlas-downloads:
+  prowlarr-config:

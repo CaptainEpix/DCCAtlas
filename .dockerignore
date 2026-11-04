@@ -1,0 +1,9 @@
+# Allowlist: only what the product image needs enters the build context.
+*
+!lib/
+!webapp/
+!deploy/
+!engine/
+**/__pycache__
+**/*.pyc
+deploy/secrets

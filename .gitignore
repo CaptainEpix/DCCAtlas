@@ -1,0 +1,30 @@
+# Temporary review checkout and one-off review scratch files
+/.review/
+
+# Generated catalog imports and acceptance-run databases (some are multi-GB)
+/.test-catalog-worker-*/
+/.test-web-download-*/
+/phase4-acceptance-run-*/
+
+# Live IRC/DCC transcripts, downloaded content and per-run state
+/live-test-attempts/
+/reference/live-evidence/*.tsv
+/reference/live-evidence/*.jsonl
+
+# Local databases, WAL files and runtime logs
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+*.log
+*.raw
+*.7z
+
+# Python caches
+__pycache__/
+**/__pycache__/
+*.py[cod]
+/deploy/secrets/
+
+# Third-party test inputs fetched by tools/*_check.sh (2026-10-27)
+/.cache/

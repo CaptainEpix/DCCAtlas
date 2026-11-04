@@ -1,0 +1,8 @@
+Query: @find filename spaces
+
+<CaptainEpix> [@Find Results] -=SysReset 2.55=-
+<CaptainEpix> Found [1] file on Trigger:[!fserve] - Sends:[0/1] - Queues:[0/1]
+<CaptainEpix> File: [Movies\filename with spaces.txt] - Size [32B]
+<CaptainEpix> End of @Find.
+
+Observed implication: multiple search terms can match non-contiguously within one filename/path. Treat the query as opaque and let the server define semantics.

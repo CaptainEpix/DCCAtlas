@@ -1,0 +1,8 @@
+Two distinct remote files were retrieved successfully:
+
+  /MOVIES/duplicate.txt      -> 30B, contents: DUPLICATE TEST - MOVIES copy.
+  /PAGINATION/duplicate.txt  -> 34B, contents: DUPLICATE TEST - PAGINATION copy.
+
+Irssi saved both as `/downloads/duplicate.txt`, and the second silently replaced the first.
+
+Production requirement: remote identity is not basename. Preserve or safely encode at least network + nick + trigger + full remote path in the final local destination. Do not silently overwrite a different remote object with the same basename.

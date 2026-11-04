@@ -1,0 +1,6 @@
+Query: @find cross-trigger
+
+<CaptainEpix> [@Find Results] -=SysReset 2.55=-
+<CaptainEpix> Found [1] file on Trigger:[/ctcp CaptainEpix !fserve2] - Sends:[0/1] - Queues:[0/1]
+<CaptainEpix> File: [cross-trigger.txt] - Size [37B]
+<CaptainEpix> End of @Find.

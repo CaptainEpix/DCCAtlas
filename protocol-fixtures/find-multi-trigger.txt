@@ -1,0 +1,10 @@
+Query: @find cross-trigger
+
+<CaptainEpix> [@Find Results] -=SysReset 2.55=-
+<CaptainEpix> Found [1] file on Trigger:[!fserve] - Sends:[0/1] - Queues:[0/1]
+<CaptainEpix> File: [cross-trigger.txt] - Size [37B]
+<CaptainEpix> Found [1] file on Trigger:[!fserve2] - Sends:[0/1] - Queues:[0/1]
+<CaptainEpix> File: [cross-trigger.txt] - Size [37B]
+<CaptainEpix> End of @Find.
+
+Parser requirement: each File line belongs to the most recent Found/Trigger section. One overall @Find block can contain multiple trigger sections from the same nick.

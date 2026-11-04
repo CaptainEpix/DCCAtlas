@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DCCAtlas</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <div class="shell">
+    <aside id="rail" class="rail" hidden>
+      <div class="brand">
+        <img src="icon.svg" alt="" width="24" height="24">
+        <span>DCCAtlas</span>
+      </div>
+      <nav id="nav" class="nav" aria-label="Sections">
+        <a href="#servers" data-section="servers">Servers <span id="nav-servers" class="count" hidden></span></a>
+        <a href="#search" data-section="search">Search</a>
+        <a href="#browse" data-section="browse">Browse <span id="nav-browse" class="dot" hidden></span></a>
+        <a href="#transfers" data-section="transfers" class="nav-break">Transfers <span id="nav-transfers" class="count" hidden></span></a>
+        <button id="nav-settings" class="nav-group nav-break" type="button"
+          aria-expanded="false" aria-controls="nav-settings-items">Settings
+          <span class="chevron" aria-hidden="true"></span></button>
+        <div id="nav-settings-items" class="nav-sub" hidden>
+          <a href="#sources" data-section="sources">Sources</a>
+          <a href="#apps" data-section="apps">Apps</a>
+          <a href="#log" data-section="log">Log</a>
+          <a href="#account" data-section="account">Password</a>
+        </div>
+      </nav>
+      <div class="rail-sources">
+        <p class="rail-title">Connections</p>
+        <ul id="rail-sources" class="plain"></ul>
+        <p id="rail-sources-empty" class="rail-empty">No source yet.</p>
+      </div>
+      <div class="rail-foot">
+        <span id="engine-badge" class="badge" hidden></span>
+        <button id="logout" class="quiet" type="button" hidden>Sign out</button>
+      </div>
+    </aside>
+
+    <main id="main">
+      <p id="notice" class="notice" role="status" hidden></p>
+
+      <section id="view-loading" class="gate">
+        <p class="hint">Loading…</p>
+      </section>
+
+      <section id="view-setup" class="gate" hidden>
+        <div class="brand"><img src="icon.svg" alt="" width="28" height="28"><span>DCCAtlas</span></div>
+        <h2>Set a password</h2>
+        <p class="hint">To show it is you, enter the setup code DCCAtlas wrote to its log
+          when it started: run <code>docker compose -f deploy/compose.yaml logs dccatlas</code>, or
+            <code>docker logs</code> with the container's name, and look for
+          “Setup code”.</p>
+        <form id="setup-form" class="gate-form" autocomplete="off">
+          <label>Setup code
+            <input name="code" autocomplete="off" spellcheck="false" required></label>
+          <label>New password (12 characters or more)
+            <input name="password" type="password" minlength="12" autocomplete="new-password" required></label>
+          <label>The new password again
+            <input name="again" type="password" minlength="12" autocomplete="new-password" required></label>
+          <button type="submit">Set password</button>
+          <p id="setup-error" class="error" role="alert" hidden></p>
+        </form>
+        <p id="setup-problem" class="error" hidden></p>
+      </section>
+
+      <section id="view-login" class="gate" hidden>
+        <div class="brand"><img src="icon.svg" alt="" width="28" height="28"><span>DCCAtlas</span></div>
+        <h2>Sign in</h2>
+        <form id="login-form" autocomplete="off">
+          <label for="password">Password</label>
+          <input id="password" type="password" autocomplete="current-password" required>
+          <button type="submit">Sign in</button>
+          <p id="login-error" class="error" role="alert" hidden></p>
+          <button id="forgot" class="link" type="button">Forgot password?</button>
+        </form>
+        <form id="reset-form" class="gate-form" autocomplete="off" hidden>
+          <p class="hint">A reset code was written to DCCAtlas's log: run <code>docker compose -f deploy/compose.yaml logs dccatlas</code>, or
+            <code>docker logs</code> with the container's name,
+            and look for “Password reset code”. It works once, for 15 minutes. Your sources,
+            logins and file lists are kept; anyone signed in is signed out.</p>
+          <label>Reset code
+            <input name="code" autocomplete="off" spellcheck="false" required></label>
+          <label>New password (12 characters or more)
+            <input name="password" type="password" minlength="12" autocomplete="new-password" required></label>
+          <label>The new password again
+            <input name="again" type="password" minlength="12" autocomplete="new-password" required></label>
+          <button type="submit">Reset password</button>
+          <p id="reset-error" class="error" role="alert" hidden></p>
+          <button id="reset-back" class="link" type="button">Back to sign in</button>
+        </form>
+      </section>
+
+      <div id="view-app" hidden>
+
+        <!-- Search -->
+        <section id="section-search" class="view" aria-labelledby="search-heading">
+          <header class="view-head">
+            <h2 id="search-heading">Search</h2>
+            <span id="search-state" class="badge" hidden></span>
+          </header>
+          <form id="search-form" class="search-form" autocomplete="off">
+            <div class="search-bar">
+              <input id="terms" maxlength="350" placeholder="Search terms" aria-label="Search terms" required>
+              <button type="submit">Search</button>
+              <button id="save-search" class="quiet" type="button">Save this search</button>
+            </div>
+            <fieldset id="search-sources" class="ticks" hidden>
+              <legend>Where to look</legend>
+              <div class="actions tick-all">
+                <button id="tick-channels" class="quiet" type="button">All channels</button>
+                <button id="tick-lists" class="quiet" type="button">All file lists</button>
+              </div>
+              <div id="search-source-list"></div>
+              <p class="hint">Each ticked source is sent one query, five sources at most.
+                A file list is searched here and sends nothing.</p>
+            </fieldset>
+            <p id="search-error" class="error" role="alert" hidden></p>
+          </form>
+          <details id="saved-box" class="sub" open hidden>
+            <summary>Saved searches</summary>
+            <p class="hint">A saved search runs only when you press Search beside it, and is
+              sent exactly as if you had typed it.</p>
+            <ul id="saved-searches" class="plain"></ul>
+          </details>
+          <p id="search-summary" class="summary" hidden></p>
+          <div class="table-wrap">
+            <table id="results" class="results" hidden>
+              <thead><tr><th class="source-col">Found in</th><th>File</th><th class="num">Size</th><th>From</th><th>Trigger</th><th><span class="sr-only">Actions</span></th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div id="pager" class="pager" hidden>
+            <button id="page-prev" class="quiet" type="button">Previous</button>
+            <span id="page-label" class="hint"></span>
+            <button id="page-next" class="quiet" type="button">Next</button>
+          </div>
+          <details id="search-history-box" class="sub" hidden>
+            <summary>Earlier searches</summary>
+            <ul id="search-history" class="plain"></ul>
+            <div class="actions">
+              <button id="clear-history" class="quiet" type="button">Clear all</button>
+            </div>
+          </details>
+        </section>
+
+        <!-- Browse -->
+        <section id="section-browse" class="view" aria-labelledby="browse-heading" hidden>
+          <header class="view-head">
+            <h2 id="browse-heading">Browse</h2>
+          </header>
+          <p class="lede">Read a file server's folders without asking for any file.</p>
+          <div id="browse-card" hidden>
+            <details class="explain">
+              <summary>How this works</summary>
+              <p>Browse, beside a file server's result, opens its session once and reads
+                its folders, two deep and at most 40, without asking for any file. A file you fetch
+                from here is checked in a fresh listing of its folder first, as for any download.</p>
+            </details>
+            <div class="browse-head">
+              <p id="browse-title"></p>
+              <span id="browse-state" class="badge"></span>
+            </div>
+            <p id="browse-note" class="notice" hidden></p>
+            <form id="browse-find" class="row" autocomplete="off" hidden>
+              <input id="browse-find-terms" maxlength="100" placeholder="Find files in what was read"
+                aria-label="Find files in what was read" required>
+              <button type="submit" class="quiet">Find</button>
+              <button id="browse-find-clear" type="button" class="quiet" hidden>Show folders</button>
+            </form>
+            <p id="browse-crumbs" class="crumbs"></p>
+            <p id="browse-unread" class="notice" hidden>This folder's contents were not read: a
+              browse reads 40 folders at most.
+              <button id="browse-here" class="quiet" type="button">Browse from here</button></p>
+            <p id="browse-stopped" class="notice" hidden>This browse stopped before it read
+              everything.
+              <button id="browse-again" class="quiet" type="button">Browse again</button></p>
+            <ul id="browse-folders" class="plain browse-folders"></ul>
+            <div class="table-wrap">
+              <table id="browse-files" class="results" hidden>
+                <thead><tr><th>File</th><th id="browse-folder-col" hidden>Folder</th>
+                  <th class="num">Size</th><th><span class="sr-only">Actions</span></th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <p id="browse-more" class="hint" hidden></p>
+            <p id="browse-empty" class="hint" hidden>This folder is empty.</p>
+            <p id="browse-error" class="error" role="alert" hidden></p>
+          </div>
+          <p class="view-empty">Nothing browsed yet. Press Browse beside a search result, or beside
+            a server under Servers.</p>
+        </section>
+
+        <!-- Servers: who is in each source's channel, and their lists (2026-10-28) -->
+        <section id="section-servers" class="view" aria-labelledby="servers-heading" hidden>
+          <header class="view-head">
+            <h2 id="servers-heading">Servers</h2>
+          </header>
+          <p class="lede">The file and list servers in your sources' channels, and the lists of
+            what they hold, by source.</p>
+          <div id="seen-card" hidden>
+            <label class="check seen-filter"><input id="hide-duplicates" type="checkbox">
+              Hide duplicates (servers of the same name already listed under a source added
+              earlier)</label>
+            <details class="explain">
+              <summary>How this works</summary>
+              <p>Servers are listed as they announce themselves in a source's channel while it is
+                connected; nothing is sent to see them. SysReset's and FServe.pl's announcements are
+                read, and a list server's "@Nick". Ask for lists sends "!list" to the channel, at
+                most once a minute: servers answer with their lists' names, and are listed too. A
+                list a server sends you unasked in the two minutes after is taken, one at a time,
+                and kept as its file list; nothing else is taken.</p>
+              <p>Browse sends a file server's trigger once and reads its folders. Get list sends
+                "@Nick" once and keeps the list it sends. A file list is searched under Search
+                without sending anything; before a download the file server is asked for a fresh
+                listing of the file's folder, and a list server's file is asked for by posting its
+                row.</p>
+            </details>
+            <p id="seen-error" class="error" role="alert" hidden></p>
+            <ul id="list-imports" class="plain"></ul>
+            <div id="seen-sources"></div>
+            <div id="orphan-lists" hidden>
+              <h3>Lists of removed or changed sources</h3>
+              <p class="hint">Their source was removed, or now names another server, so they
+                cannot be searched.</p>
+              <ul id="stored-lists" class="plain"></ul>
+            </div>
+            <details id="placed-box" class="sub">
+              <summary>Add a list by hand</summary>
+              <form id="placed-form" autocomplete="off">
+                <p class="hint">Pick the list on this computer, or one already in the downloads
+                  folder: a .txt, or a .zip, .rar or .7z holding one. A file sent from here is
+                  kept with DCCAtlas's lists in its appdata. A list added by hand does not say
+                  whose list it is, so type it in.
+                  A list server's list (rows such as <code>!Nick name ::INFO:: size</code>) is
+                  recognised by itself and needs no trigger: its files are fetched by posting their
+                  rows, as with Get list. For a file server's listing, nothing checks that the list
+                  is that server's: a download from it asks the nick typed here, with this trigger,
+                  after the usual fresh listing of the file's folder.</p>
+                <div class="grid">
+                  <label>File on this computer <input name="upload" type="file"
+                    accept=".txt,.zip,.rar,.7z"></label>
+                  <label>Or in the downloads folder <select name="path"></select></label>
+                  <label>Source <select name="source_id" required></select></label>
+                  <label>File server's nickname <input name="sender" maxlength="64" required></label>
+                  <label>Trigger <input name="trigger" maxlength="200"
+                    placeholder="!Name or /ctcp Name trigger; not for a list server"></label>
+                </div>
+                <div class="actions">
+                  <button type="submit">Add as a file list</button>
+                  <button id="placed-refresh" class="quiet" type="button">Look again</button>
+                </div>
+                <p id="placed-note" class="hint" hidden></p>
+                <p id="placed-error" class="error" role="alert" hidden></p>
+              </form>
+            </details>
+          </div>
+          <p class="view-empty">No source has been added. Add one under Sources and connect it
+            to see its channel's servers.</p>
+        </section>
+
+        <!-- Transfers: the queue and downloads -->
+        <section id="section-transfers" class="view" aria-labelledby="transfers-heading" hidden>
+          <header class="view-head">
+            <h2 id="transfers-heading">Transfers</h2>
+          </header>
+
+          <div id="queue-card" class="block" aria-labelledby="queue-heading">
+            <div class="block-head">
+              <h3 id="queue-heading">Queue</h3>
+              <span id="queue-state" class="badge"></span>
+            </div>
+            <p class="lede">Fetched in order once you press Start. It never starts by itself.</p>
+            <details class="explain">
+              <summary>How this works</summary>
+              <p>Files added here are fetched in order once you press Start, each as if
+                you had pressed its Download button; with two downloads at once, the next one starts
+                beside a file being received if it comes from another file server. The queue goes on after a file arrives, or turns
+                out to have gone, and pauses at anything else. It never starts by itself.</p>
+            </details>
+            <p id="queue-reason" class="notice" hidden></p>
+            <p id="queue-empty" class="hint">Nothing is queued. Use “Add to queue” beside a search
+              result, a file-list hit or a browsed file.</p>
+            <ul id="queue-items" class="plain"></ul>
+            <div class="actions">
+              <button id="queue-start" type="button">Start</button>
+              <button id="queue-pause" class="quiet" type="button">Pause</button>
+              <button id="queue-clear" class="quiet" type="button">Clear finished</button>
+            </div>
+            <p id="queue-error" class="error" role="alert" hidden></p>
+          </div>
+
+          <div class="block" aria-labelledby="downloads-heading">
+            <div class="block-head">
+              <h3 id="downloads-heading">Downloads</h3>
+            </div>
+            <div class="settings-row">
+              <label class="inline">Downloads at once
+                <select id="downloads-at-once" disabled>
+                  <option value="1">1</option>
+                  <option value="2">2, from different file servers</option>
+                </select>
+              </label>
+              <label class="check"><input id="retry-before-request" type="checkbox" disabled>
+                Try again by itself when a file server's session drops before the file is asked
+                for: a fresh session, at most twice, within two minutes. A request that may have
+                been sent is never sent again by itself.</label>
+            </div>
+            <details class="explain">
+              <summary>How downloads at once works</summary>
+              <p>With 2, a file server's file can start while another file server's file
+                is being received. Never two from one file server; searches, browses and search bots'
+                files still wait for every transfer to end.</p>
+            </details>
+            <p id="downloads-empty" class="hint">Nothing has been downloaded yet.</p>
+            <p id="download-error" class="error" role="alert" hidden></p>
+            <ul id="downloads" class="plain"></ul>
+            <div class="actions">
+              <button id="downloads-clear" class="quiet" type="button" hidden>Clear finished</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Sources -->
+        <section id="section-sources" class="view" aria-labelledby="source-heading" hidden>
+          <header class="view-head">
+            <h2 id="source-heading">Source</h2>
+            <span id="source-state" class="badge">unknown</span>
+          </header>
+          <div id="source-tabs" class="tabs" hidden>
+            <div id="source-tab-list" class="tab-list" role="tablist" aria-label="Sources"></div>
+            <button id="add-source" class="tab" type="button">+ Add source</button>
+          </div>
+          <p id="source-where" class="where" hidden></p>
+          <p id="source-reason" class="notice" hidden></p>
+          <p id="source-log-link" class="hint" hidden>
+            <button id="show-source-log" class="link" type="button">See this source's log</button>
+          </p>
+          <p id="source-nick" class="hint" hidden></p>
+          <form id="source-form" class="block" autocomplete="off">
+            <div class="grid">
+              <label>Label <input name="label" maxlength="80" required></label>
+              <label>Server host <input name="host" maxlength="253" required></label>
+              <label>Port <input name="port" type="number" min="1" max="65535" required></label>
+              <label>Nickname <input name="nickname" maxlength="30" required></label>
+              <label>Channel <input name="channel" maxlength="200" placeholder="#channel" required></label>
+              <label>Searched through
+                <select name="provider">
+                  <option value="sysreset_find">File servers (@find)</option>
+                  <option value="searchbot">A search bot (@search)</option>
+                </select>
+              </label>
+              <label>Category
+                <select name="category" required>
+                  <option value="7000">Books</option>
+                  <option value="7020">Books/EBook</option>
+                  <option value="7030">Books/Comics</option>
+                  <option value="3030">Audio/Audiobook</option>
+                  <option value="3000">Audio</option>
+                  <option value="2000">Movies</option>
+                  <option value="5000">TV</option>
+                  <option value="4000">PC</option>
+                  <option value="1000">Console</option>
+                  <option value="8000">Other</option>
+                </select>
+              </label>
+              <label id="search-bot-field" hidden>Search bot's nickname
+                <input name="search_bot" maxlength="30" placeholder="the nick that sends the result list">
+              </label>
+              <label class="check"><input name="tls" type="checkbox"> Use TLS (certificate verified)</label>
+            </div>
+            <p id="port-hint" class="warn-text" hidden></p>
+            <div class="actions">
+              <button type="submit">Save</button>
+              <button id="connect" type="button">Connect</button>
+              <button id="disconnect" class="quiet" type="button">Disconnect</button>
+              <button id="remove-source" class="quiet" type="button" hidden>Remove</button>
+              <button id="cancel-add" class="quiet" type="button" hidden>Cancel</button>
+            </div>
+            <p id="source-error" class="error" role="alert" hidden></p>
+          </form>
+          <details id="login-box" class="sub" hidden>
+            <summary id="login-summary">Login</summary>
+            <form id="login-source-form" autocomplete="off">
+              <p class="lede">For networks or channels that only deal with registered nicks.</p>
+              <details class="explain">
+                <summary>How this works</summary>
+                <p>For a network or channel that only deals with registered nicks.
+                  The password is given to the server at the next Connect and is never shown
+                  again. Without TLS it would cross the network as typed, so it is refused unless
+                  the server is on a private network. A client certificate is made by the app
+                  for this source; add its fingerprint to your account, and it logs in with no
+                  password (TLS only).</p>
+              </details>
+              <div class="grid">
+                <label>Kind
+                  <select name="kind">
+                    <option value="sasl_plain">Account (SASL)</option>
+                    <option value="server_password">Server password</option>
+                    <option value="nickserv">NickServ password</option>
+                    <option value="certificate">Client certificate (SASL EXTERNAL)</option>
+                  </select>
+                </label>
+                <label id="login-user-field">Account name
+                  <input name="username" maxlength="64" autocomplete="off"></label>
+                <label id="login-password-field">Password
+                  <input name="password" type="password" maxlength="128"
+                    autocomplete="new-password" required></label>
+              </div>
+              <div class="actions">
+                <button type="submit">Save login</button>
+                <button id="login-clear" class="quiet" type="button">Clear login</button>
+              </div>
+              <div id="login-fingerprints" class="hint" hidden>
+                <p>This source's certificate. From any client logged in to your account, send
+                  <code>/msg NickServ CERT ADD &lt;fingerprint&gt;</code> with the fingerprint
+                  your network uses: SHA-512 on Libera.Chat, SHA-256 on Ergo servers; ask the
+                  network if unsure.</p>
+                <p>SHA-256 <code id="login-sha256" class="fingerprint"></code></p>
+                <p>SHA-512 <code id="login-sha512" class="fingerprint"></code></p>
+              </div>
+              <p id="login-note" class="hint" hidden></p>
+              <p id="login-source-error" class="error" role="alert" hidden></p>
+            </form>
+          </details>
+        </section>
+
+        <!-- Apps: Prowlarr and anything else speaking Newznab and SABnzbd -->
+        <section id="section-apps" class="view" aria-labelledby="prowlarr-heading" hidden>
+          <header class="view-head">
+            <h2 id="prowlarr-heading">Apps</h2>
+          </header>
+          <p class="lede">Prowlarr, and through it Sonarr, Radarr and Readarr, or a book app such
+            as Bindery directly: any app that searches a Newznab indexer and downloads through
+            SABnzbd can use DCCAtlas as both.</p>
+          <label class="check"><input id="prowlarr-enabled" type="checkbox" disabled>
+            Let apps search and download through DCCAtlas</label>
+          <details class="explain">
+            <summary>How this works</summary>
+            <p>A search in Prowlarr reaches only the sources whose category it asks for (each
+              source's Category, under Sources), and the stored file lists of such sources; asked
+              for no category, only stored file lists are searched, which sends nothing. A Books
+              search reaches Books, EBook and Comics sources; an EBook search reaches EBook and
+              Books sources. It is one search of those places, with the same limits as a search
+              across sources here. Prowlarr gets an answer within 30 seconds; the search goes on
+              here, and the same search again in Prowlarr shows the rest without sending anything
+              again. A file sent from Prowlarr starts as Download does here, once, and is never
+              asked for again by itself.</p>
+            <p>A source of the category asked for that is not connected is connected for the
+              search, and disconnected again once no search has used it for the minutes set
+              below and no download still needs it. A source you connect or disconnect yourself
+              is left as you set it. A source that fails to connect is not tried again for ten
+              minutes.</p>
+            <p>At most the number of searches set below reach IRC from Prowlarr in an hour.
+              Past it Prowlarr is told the limit is reached, and leaves DCCAtlas alone for an
+              hour; nothing is sent. Searches answered from earlier ones, or from stored file
+              lists only, do not count.</p>
+          </details>
+          <div id="prowlarr-setup" class="block" hidden>
+            <p class="hint">In Prowlarr (or another app), add an indexer <strong>Generic
+              Newznab</strong> with URL <code>http://&lt;host&gt;:&lt;port&gt;/newznab</code>,
+              API path <code>/api</code> and the key below; and a download client
+              <strong>SABnzbd</strong> with host <code>&lt;host&gt;</code>, port
+              <code>&lt;port&gt;</code>, SSL off, URL base <code>sabnzbd</code> and the same key.
+              <code>&lt;host&gt;</code> is the IP address of the machine DCCAtlas runs on, and
+              <code>&lt;port&gt;</code> the port you open this page on (7744 by default on
+              Unraid). Only for Prowlarr started beside DCCAtlas from this project's Docker
+              Compose file, use host <code>dccatlas</code> and port <code>8080</code> instead
+              (its name on their shared network).</p>
+            <p class="key-line">Key <code id="prowlarr-key"></code></p>
+            <div class="actions">
+              <button id="prowlarr-new-key" class="quiet" type="button">New key</button>
+            </div>
+            <form id="prowlarr-settings" class="grid" autocomplete="off">
+              <label class="check"><input name="lists_only" type="checkbox">
+                Search only stored file lists: answers come at once and nothing is sent to
+                IRC, but servers without a stored list are not asked</label>
+              <label>Searches sent to IRC from Prowlarr, at most, an hour
+                <input name="searches_per_hour" type="number" min="1" max="60" required></label>
+              <label class="check"><input name="connect_sources" type="checkbox">
+                Connect sources of the category asked for</label>
+              <label>Disconnect them after this many minutes unused
+                <input name="idle_minutes" type="number" min="5" max="240" required></label>
+              <label class="check"><input name="category_folders" type="checkbox">
+                Move finished files into a folder per category (as SABnzbd does, for Sonarr,
+                Radarr and the others to import from)</label>
+              <div class="actions"><button type="submit">Save</button></div>
+            </form>
+            <p id="prowlarr-note" class="hint" role="status" hidden></p>
+          </div>
+          <p id="prowlarr-error" class="error" role="alert" hidden></p>
+        </section>
+
+        <!-- Log -->
+        <section id="section-log" class="view view-wide" aria-labelledby="log-heading" hidden>
+          <div id="log-card">
+            <header class="view-head">
+              <h2 id="log-heading">Log</h2>
+              <label class="inline">Show
+                <select id="log-source"><option value="">All sources</option></select>
+              </label>
+            </header>
+            <details class="explain">
+              <summary>What is logged</summary>
+              <p>What the servers said to this client, what DCCAtlas sent, and Irssi's own
+                notices and errors. Channel chat and the server's message of the day are left out, and
+                no password is ever written here. The last 2,000 lines are kept, also across a
+                restart; <code>docker logs</code> keeps them too.</p>
+            </details>
+            <div id="log-box" class="log-box" role="log" tabindex="0" aria-label="Log lines"></div>
+            <p id="log-empty" class="hint">Nothing logged yet.</p>
+            <div class="actions">
+              <label class="check"><input id="log-follow" type="checkbox" checked> Keep the newest in view</label>
+              <button id="log-clear" class="quiet" type="button">Clear the view</button>
+            </div>
+            <p id="log-error" class="error" role="alert" hidden></p>
+          </div>
+        </section>
+
+        <!-- Password -->
+        <section id="section-account" class="view" aria-labelledby="account-heading" hidden>
+          <header class="view-head">
+            <h2 id="account-heading">Password</h2>
+          </header>
+          <p class="lede">Change the password that signs you in. Any other browser signed in
+            is signed out; this one stays signed in.</p>
+          <form id="password-form" class="gate-form narrow-form" autocomplete="off">
+            <label>Current password
+              <input name="current" type="password" autocomplete="current-password" required></label>
+            <label>New password (12 characters or more)
+              <input name="password" type="password" minlength="12" autocomplete="new-password" required></label>
+            <label>The new password again
+              <input name="again" type="password" minlength="12" autocomplete="new-password" required></label>
+            <button type="submit">Change password</button>
+            <p id="password-note" class="hint" role="status" hidden></p>
+            <p id="password-error" class="error" role="alert" hidden></p>
+          </form>
+          <details class="explain">
+            <summary>If you forget it</summary>
+            <p>Sign out, press “Forgot password?” and enter the reset code DCCAtlas writes to
+              its log. A password file (<code>deploy/secrets/password.txt</code>) also sets the
+              password, when it is new or changed, at the next start.</p>
+          </details>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

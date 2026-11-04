@@ -1,0 +1,9 @@
+Observed SysReset behavior:
+
+Requested over DCC CHAT:
+  get filename with spaces.txt
+
+Incoming DCC SEND offer:
+  filename_with_spaces.txt
+
+v0.1.2+ accepts only the exact expected legacy transformation (spaces -> underscores) from the expected nick. v0.1.5 preflights collisions before sending GET when both names exist in the same verified directory.

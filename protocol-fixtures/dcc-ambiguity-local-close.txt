@@ -1,0 +1,10 @@
+Observed with both `foo bar.txt` and `foo_bar.txt` present:
+
+-CaptainEpix- DCC Send foo bar.txt (192.0.2.10)
+Irssi: [fscrawl] Rejecting ambiguous legacy DCC filename alias: offered=[foo_bar.txt], expected=[foo bar.txt]. A distinct file with the offered name exists in the same directory.
+DCC GET close for CaptainEpix [foo_bar.txt]
+DCC aborted receiving file foo_bar.txt from CaptainEpix
+Irssi: [fscrawl] Actively rejected DCC SEND: offered=[foo_bar.txt] reason=[ambiguous-space-to-underscore]
+Irssi: [fscrawl] Canceled pending download request: foo bar.txt.
+
+Important follow-up observation: SysReset/mIRC still kept its outgoing send slot occupied after the receiver closed locally, so a later transfer was queued. Therefore v0.1.5 refuses a predictable collision BEFORE sending GET. Local close remains defense-in-depth for unexpected offers, not a reliable remote cancellation mechanism.

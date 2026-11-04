@@ -1,0 +1,6 @@
+Query: @find second-trigger-only
+
+<CaptainEpix> [@Find Results] -=SysReset 2.55=-
+<CaptainEpix> Found [1] file on Trigger:[!fserve2] - Sends:[0/1] - Queues:[0/1]
+<CaptainEpix> File: [SecondOnly\second-trigger-only.txt] - Size [29B]
+<CaptainEpix> End of @Find.
