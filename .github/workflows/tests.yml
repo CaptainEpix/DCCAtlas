@@ -1,10 +1,8 @@
 # Runs the offline suites of docs/TESTING.md, each in the product image
 # built from this commit with networking disabled (--network none), as
-# TESTING.md runs them. The engine's Perl suite, the container checks and the
-# browser checks run on every push to main and on pull requests. The web
-# service's suite takes about 40 minutes, which a private repository pays
-# for in Actions minutes, so it runs only on a version tag or when started
-# by hand (Actions, Tests, Run workflow). The three labs against
+# TESTING.md runs them: the engine's Perl suite, the container checks, the
+# web service's suite (about 40 minutes) and the browser checks, on every
+# push to main, on pull requests and on version tags. The three labs against
 # third-party software (Ergo, FServe.pl, Prowlarr) are left to a release:
 # they pull other images and download FServe.pl.
 name: Tests
@@ -48,7 +46,6 @@ jobs:
 
   web:
     name: Web service
-    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:

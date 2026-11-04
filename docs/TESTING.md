@@ -2,9 +2,8 @@
 
 Every test runs offline: on loopback, with networking disabled, or on an
 internal Docker network with no way out. Nothing here connects to a real IRC
-network. GitHub runs the engine, container and browser checks on every
-push to `main`, and the web suite too on a version tag or when started by
-hand (`.github/workflows/tests.yml`). Build the product image first:
+network. GitHub runs all but the three labs on every push to `main`
+(`.github/workflows/tests.yml`). Build the product image first:
 
 ```sh
 docker build -f deploy/Dockerfile -t dccatlas:dev .

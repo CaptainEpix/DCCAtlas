@@ -4,10 +4,9 @@ How a version of DCCAtlas reaches Unraid and anyone who pulls the image.
 
 1. Run every suite in [TESTING.md](TESTING.md): the Perl suite, the web
    suite, the browser checks, the container checks, and the three offline
-   labs. The **Tests** workflow (`.github/workflows/tests.yml`) runs the
-   engine, container and browser checks on every push to `main`; start it
-   by hand on `main` (Actions, Tests, Run workflow) to run the web suite too,
-   and let that run pass before tagging.
+   labs. The **Tests** workflow (`.github/workflows/tests.yml`) runs all but
+   the labs on every push to `main`; its run for the commit must have
+   passed before tagging.
 2. Add the version to [CHANGES.md](CHANGES.md): what changed for someone
    using it, and what the update does to data kept from before.
 3. Tag the tested commit and push the tag:
