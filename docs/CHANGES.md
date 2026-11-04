@@ -4,6 +4,12 @@ What each version changed, newest first. The [user guide](USER_GUIDE.md)
 describes DCCAtlas as it is now; this page says when things changed, and
 what an update does to data kept from before it.
 
+## 1.0.0 (2026-11-04)
+
+- The first public release, the same as 0.9.16. The image is
+  `ghcr.io/captainepix/dccatlas`, and the Unraid template is in
+  [CaptainEpix/dccatlas-unraid](https://github.com/CaptainEpix/dccatlas-unraid).
+
 ## 0.9.16 (2026-11-03)
 
 - A newer base image: Irssi 1.4.5 on Debian with its latest updates, for
