@@ -26,8 +26,8 @@ those of the feature list drawn up on 2026-10-21; the rest came up later.
 - **A login on a public network** (NickServ, SASL or certificate). All three
   pass against Ergo offline; a live test needs approval to connect.
 - **14: a queued file arriving from SysReset**, and two downloads at once and
-  Browse from an advert against SysReset (seen against FServe.pl only). The
-  lab's mIRC licence has lapsed.
+  Browse from an advert against SysReset (seen against FServe.pl only). They
+  need a SysReset server to test against; the test lab used before is gone.
 
 ## Small follow-ups
 

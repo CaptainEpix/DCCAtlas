@@ -70,9 +70,11 @@ configuration volume.
 - `t/`, `tools/`, `protocol-fixtures/` — the offline tests and fixtures;
   [docs/TESTING.md](docs/TESTING.md) says how to run them.
 
-What changed in each version is in [docs/CHANGES.md](docs/CHANGES.md); what
-is left to do is in the [backlog](docs/BACKLOG.md); how a version is released
-is in [docs/RELEASING.md](docs/RELEASING.md).
+How the parts fit together, and the rules every change keeps, are in
+[docs/DEVELOPING.md](docs/DEVELOPING.md). What changed in each version is in
+[docs/CHANGES.md](docs/CHANGES.md); what is left to do is in the
+[backlog](docs/BACKLOG.md); how a version is released is in
+[docs/RELEASING.md](docs/RELEASING.md).
 
 ## Licence
 
