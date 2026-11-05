@@ -3,7 +3,7 @@
 import { $, badge, formatBytes, PAGE_SIZE, setText, shared, show, STATE_LABELS } from "./core.js";
 import { api } from "./api.js";
 import { listWhen } from "./lists.js";
-import { sourceEntries } from "./sources.js";
+import { sourceEntries, tickedLists, tickedSources } from "./sources.js";
 import { runSaved } from "./saved.js";
 import { startBrowse } from "./browse.js";
 import { addToQueue, startDownload } from "./transfers.js";

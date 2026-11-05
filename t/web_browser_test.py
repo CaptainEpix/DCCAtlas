@@ -353,11 +353,14 @@ class BrowserChecks(unittest.TestCase):
         expect(page.locator("#seen-error")).to_contain_text("nickname")
 
         # All file lists, under the search bar, ticks every stored list and
-        # then reads No file lists (2026-10-29).
+        # then reads No file lists (2026-10-29). With the ticks shown, the
+        # search asks where they say: 1.0.0 failed here with "tickedSources
+        # is not defined", as the single-source walk above hides the ticks.
         ticked = page.evaluate("""async () => {
           const { renderSearchSources, sourceEntries, tickedLists } =
             await import("/js/sources.js");
           const { fileLists } = await import("/js/lists.js");
+          const { chosenPlaces } = await import("/js/search.js");
           renderSearchSources(sourceEntries);
           const button = document.getElementById("tick-lists");
           if (button.hidden) return null;
@@ -365,10 +368,15 @@ class BrowserChecks(unittest.TestCase):
           const all = fileLists.filter((list) => list.source_label)
             .every((list) => tickedLists.has(list.route_key));
           const label = button.textContent;
+          const shown = !document.getElementById("search-sources").hidden;
+          const places = chosenPlaces();
+          const chosen = places.lists.length === tickedLists.size &&
+            places.lists.every((key) => tickedLists.has(key));
           button.click();
-          return { all, label, after: tickedLists.size };
+          return { all, label, shown, chosen, after: tickedLists.size };
         }""")
-        self.assertEqual(ticked, {"all": True, "label": "No file lists", "after": 0})
+        self.assertEqual(ticked, {"all": True, "label": "No file lists", "shown": True,
+                                  "chosen": True, "after": 0})
 
     def test_the_password_is_set_changed_and_reset_on_the_page(self):
         """Codes are read from the service's own output, as the operator reads docker logs."""

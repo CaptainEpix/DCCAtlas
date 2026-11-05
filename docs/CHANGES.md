@@ -4,6 +4,13 @@ What each version changed, newest first. The [user guide](USER_GUIDE.md)
 describes DCCAtlas as it is now; this page says when things changed, and
 what an update does to data kept from before it.
 
+## 1.0.1 (2026-11-04)
+
+- **Search** works again when the page offers a choice of where to look
+  (more than one source, or a stored file list): in 1.0.0 it stopped at
+  "tickedSources is not defined" and nothing was searched. With a single
+  source it was not affected. Nothing kept from before changes.
+
 ## 1.0.0 (2026-11-04)
 
 - The first public release, the same as 0.9.16. The image is
